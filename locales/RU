@@ -1,0 +1,29 @@
+# /* encoding: utf-8 */
+# Copyright Altaire bot © Assassin, 2011 - 2012
+# This program published under Apache 2.0 license
+# See LICENSE.txt for more details
+# My EMail: assassin@sonikelf.ru
+# My XMPP-conference: bottiks@conference.jabber.ru
+# My Site: bottiks.ucoz.ru
+# RU-language for Altaire bot
+
+translate['noAccessDialogue'] = u'Доступ для диалога утерян. Диалог прекращен'
+translate['notAdmin'] = u'Я отказываюсь находится в данной конференции без прав администратора, заношу данную конференцию в игнор-лист и ожидаю получения прав. Если в течении 40 секунд права не будут получены, я ухожу'
+translate['getAdmin'] = u'Права администратора получены. Перезахожу для применения прав...'
+translate['sleepForAdmin'] = u'Ожидание прав администратора'
+translate['botWasBanned'] = u'Меня забанили в конференции %s и я вышел из неё'
+translate['botWasKicked'] = u'Меня кикнули в конференции %s и я вышел из неё'
+translate['noAccess'] = u'Ваш доступ недостаточен'
+translate['performed'] = u'Выполнено'
+translate['outOfArguments'] = u'Неверное количество аргументов'
+translate['nowInRoom'] = u'Бот в данный момент находится в этой конференции'
+translate['onlyInConference'] = u'Данная команда доступна для выполнения только в конференции'
+translate['notInRoom'] = u'Бот не находится в этой конференции в данный момент'
+translate['pRoom'] = u'Конференция, указанная в параметрах, равна данной конференции'
+translate['badArguments'] = u'Указаны неверные аргументы'
+translate['repo'] = u'При предыдущей сессии Altaire хотел уведомить вас об этом, но не смог изза ухода в оффлайн:' + (chr(10) * 2)
+translate['error'] = u'Ошибка:\n%s'
+translate['errorCom'] = u'Ошибка при выполнении команды "%s":\n%s'
+translate['jidTurnOff'] = u'Jabber ID %s был отключён'
+translate['reason'] = u'Причина: %s'
+translate['badAnswer'] = u'Неверное содержимое ответа'
