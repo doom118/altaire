@@ -13,8 +13,8 @@ from re import compile
 
 finder 				= compile('/">(.*)/</a></li>', 16)
 getFiles 			= lambda url: finder.findall(urlopen(url).read())
-getAllPacks 		= lambda: getFiles('https://raw.github.com/doom118/packman-packages/master/packages')
-getAllDeps 			= lambda: getFiles('https://raw.github.com/doom118/packman-packages/master/depends')
+getAllPacks 		= lambda: getFiles('http://altaire-packages.googlecode.com/git/packages')
+getAllDeps 			= lambda: getFiles('http://altaire-packages.googlecode.com/git/depends')
 getDepFiles 		= lambda: os.listdir('depends')
 getInstalledPacks 	= lambda: os.listdir('packages')
 
@@ -35,7 +35,7 @@ def downloadDir(url, dir):
 def packman_init(pack, depend = False):
 	if (pack in getAllPacks()) or (depend and (pack in getAllDeps())):
 		temp = ('depends' if depend else 'packages')
-		depPacks, depFiles = [eval(x) for x in urlopen('https://raw.github.com/doom118/packman-packages/master/%s/%s/depends' % (pack, temp)).read().splitlines()]
+		depPacks, depFiles = [eval(x) for x in urlopen('http://altaire-packages.googlecode.com/git/%s/%s/depends' % (pack, temp)).read().splitlines()]
 		packs, files = getAllPacks(), getDepFiles()
 		installed = [pack]
 		for file in depFiles:
@@ -44,7 +44,7 @@ def packman_init(pack, depend = False):
 		for Pack in depPacks:
 			if Pack not in packs:
 				installed += packman_init(Pack)
-		downloadDir('https://raw.github.com/doom118/packman-packages/master/%s/%s' % (pack, temp), '%s/%s' % (pack, temp))
+		downloadDir('http://altaire-packages.googlecode.com/git/%s/%s' % (pack, temp), '%s/%s' % (pack, temp))
 		return installed
 	else: return False
 		
