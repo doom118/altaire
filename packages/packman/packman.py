@@ -10,25 +10,32 @@
 from urllib import urlretrieve as download
 from urllib2 import urlopen
 from re import compile
+# заюзать finderFiles (удалить ..)
 
-finder 				= compile('/">(.*)/</a></li>', 16)
-getFiles 			= lambda url: finder.findall(urlopen(url).read())
-getAllPacks 		= lambda: getFiles('http://altaire-packages.googlecode.com/git/packages')
-getAllDeps 			= lambda: getFiles('http://altaire-packages.googlecode.com/git/depends')
+finderDirs 			= compile('<li><a href=".*">(.*)/</a></li>')
+finderFiles			= compile('<li><a href=".*">(.*)</a></li>')
+getDirs 			= lambda url: finderDirs.findall(urlopen(url).read())
+getAllPacks 		= lambda: getDirs('http://altaire-packages.googlecode.com/git/packages')
+getAllDeps 			= lambda: getDirs('http://altaire-packages.googlecode.com/git/depends')
 getDepFiles 		= lambda: os.listdir('depends')
 getInstalledPacks 	= lambda: os.listdir('packages')
+removeItem = '..'
+
+def getFiles(url):
+	found = finderFiles.findall(urlopen(url).read())
+	if removeItem in found: found.remove(removeItem)
+	return found
 
 def downloadDir(url, dir):
 	if not os.path.exists(dir): os.makedirs(dir)
-	files = findall('">(.*)</a></li>', urlopen(url).read())
+	files = getFiles(url)
 	for file in files:
-		if file != '..':
-			if file.endswith('/'):
-				downloadDir('%s/%s' % (url, file), '%s/%s' % (dir, file))
-			else:
-				path = ('locales/%s' % file if (file.endswith('.help') or file.endswith('.comms')) else dir + '/%s' % file)
-				if os.path.exists(path): os.remove(path)					
-				download(url + '/%s' % file, path)
+		if file.endswith('/'):
+			downloadDir('%s/%s' % (url, file), '%s/%s' % (dir, file))
+		else:
+			path = ('locales/%s' % file if (file.endswith('.help') or file.endswith('.comms')) else dir + '/%s' % file)
+			if os.path.exists(path): os.remove(path)					
+			download(url + '/%s' % file, path)
 	
 	
 
@@ -84,17 +91,21 @@ def command_packman(source, parameters):
 						if result:
 							load_package(parameters[1])
 					fmsg(source, translate['performed'])
+					fmsg(source, translate['comms']['packman']['installedDepends'] % ', '.join(result))
 				else:
 					# install
+					allResults = list()
 					for pack in parameters[1:]:
 						if os.path.exists('packages/' + pack):
 							fmsg(source, translate['comms']['packman']['nowPackInstalled'] % pack)
 						else:
 							result = packman_init(pack)
+							allResults += result
 							if result:
 								load_package(parameters[1])
 							else: fmsg(source, translate['comms']['packman']['packNotFound'] % pack)
 					fmsg(source, translate['performed'])
+					fmsg(source, translate['comms']['packman']['installedDepends'] % ', '.join(allResults))
 			else: fmsg(source, translate['outOfArguments'])
 		elif parameters[0] in translate['comms']['packman']['upgrade']:
 			if lenp >= 2:
