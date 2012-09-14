@@ -48,7 +48,7 @@ def message(connect, SMessage):
 				if SMessage.getTag('request'):
 					notSetReport = xmpp.Message(fullJid)
 					notSetReport.setID(SMessage.getID())
-					notSetReport.addChild('received', namespace = 'urn:xmpp:receipts')
+					notSetReport.addChild('received', namespace = xmpp.protocol.NS_RECEIPTS)
 					connect.send(notSetReport)
 				if fullJid.getStripped() in JIDS \
 					[get_connect_jid(connect)].conferences.keys():
@@ -69,8 +69,8 @@ def message(connect, SMessage):
 		if trueJid in blocked_jids: return
 		if flooders.has_key(trueJid):
 			timer = time() - flooders[trueJid]['lastMessage']
-			if timer < 0.2:
-				if flooders[trueJid]['police'] > 6:
+			if timer < antispam_limit:
+				if flooders[trueJid]['police'] > antispam_polices:
 					blocked_jids.append(trueJid)
 					return
 				else: flooders[trueJid]['police'] += 1

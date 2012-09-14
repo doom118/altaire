@@ -8,9 +8,9 @@
 # kernel
 
 # ToDo:
-#	rewrite configs with using ConfigParser
-#	alive_keeper/jids
-#	alive_keeper/conferences
+#	rewrite configs with using ConfigParser (rewtite jid's class)		(critical)
+#	alive_keeper/jids 													(optional)
+#	alive_keeper/conferences 											(optional)
 
 
 
@@ -46,7 +46,7 @@ def Print(text, color = None, nospace = False):
 		if nospace:
 			sys.stdout.write(text)
 			sys.stdout.flush()
-		else: print text
+		else: print(text)
 	except: pass
 
 
@@ -61,6 +61,8 @@ get_bot_nick = \
 	lambda conf: JIDS[search_conf(conf)].conferences[conf].nick
 get_connect = \
 	lambda jid: JIDS[jid].connect
+popen = \
+	lambda text: unicode(os.popen('sh -c "%s" 2>&1' % text).read())
 
 # crashlogger
 def crash(com = None): 
@@ -69,8 +71,33 @@ def crash(com = None):
 	else:
 		repo(translate['error'] % format_exc())
 
-# executing the settings
-execfile('other/settings.py', globals())
+# getting the settings
+import ConfigParser
+CP = ConfigParser.ConfigParser()
+CP.read('other/config.ini')
+language = \
+	{1: CP.get('LANGUAGES', 'FIRST'),
+	2: CP.get('LANGUAGES', 'SECOND')}
+status = CP.get('INFORMATION', 'STATUS')
+default_nick = CP.get('INFORMATION', 'NICK')
+admins = CP.get('INFORMATION', 'STATUS').split()
+antispam_limit = CP.getfloat('ANTISPAM', 'LIMIT')
+antispam_polices = CP.getint('ANTISPAM', 'POLICES')
+limits = \
+	{'memory': CP.getint('LIMITS', 'MEMORY'),
+	'chat': CP.getfloat('LIMITS', 'CHAT MESSAGE'),
+	'roster': CP.getfloat('LIMITS', 'ROSTER MESSAGE'),
+	'private': CP.getfloat('LIMITS', 'PRIVATE MESSAGE')}
+CP = ConfigParser.ConfigParser()
+CP.read('other/jids.ini')
+jids = dict()
+for jid in CP.sections():
+	jids['%s@%s' % (CP.get(jid, 'USER'), CP.get(jid, 'SERVER'))] = \
+		{'port': CP.getint(jid, 'PORT'),
+		'host': CP.getint(jid, 'HOST'),
+		'password': CP.getint(jid, 'PASSWORD'),
+		'tls': CP.getboolean(jid, 'TLS'),
+		'resource': CP.get(jid, 'RESOURCE')}
 
 # operations with files
 def File(confFile, text = None, ini = False):
@@ -256,7 +283,7 @@ class command:
 
 class conference:
 	__slots__ = ('conference', 'joined', 'connect', 'password',
-		'nick', 'status', 'statusShow', 'users', 'notAdmin'
+		'nick', 'status', 'statusShow', 'users', 'notAdmin')
 	def __init__(self, connect, conference):
 		self.conference = conference
 		self.joined = False
@@ -264,7 +291,7 @@ class conference:
 	__str__ = lambda: self.conference
 	def join(self, password = None, nick = None, status = None, auto = False):
 		bot_jid = get_connect_jid(self.connect)
-		if not nick: nick = u'Altaire'
+		if not nick: nick = default_nick
 		if not status: status = status
 		if self.joined: raise Error('already joined')
 		else:
@@ -471,13 +498,21 @@ def checkRepo():
 		repo(translate['repo'] + readed)
 		File('REPO', str())
 
+def getMemory():
+	lines = popen('ps -o rss -p %d' % pid).splitlines()
+	if len(lines) >= 2:
+		return lines[1].strip()
+	else: return int()
+
 def dispatcher():
 	while True:
 		sleep(240)
+		if getMemory() > limits['memory']:
+			bot_off(translate['memoryLeak'])
 		gc.collect()
 
 class JID:
-	def __init__(self, jid):
+	def __init__(self, jid, dictionary):
 		self.jid = jid
 		self.user, self.server = jid.split('@')
 		self.connect = xmpp.Client(self.server, port, list())
@@ -487,7 +522,7 @@ class JID:
 		if self.connect.connect((self.server, port), secure = 0, use_srv = True):
 			Print('OK', green)
 			Print('Authentication:  ', brown, True)
-			if self.connect.auth(self.user, password, u'Altaire XMPP bot'):
+			if self.connect.auth(self.host, password, u'Altaire XMPP bot'):
 				Print('OK', green)
 				self.connect.sendInitPresence()
 				self.connect.getRoster()
