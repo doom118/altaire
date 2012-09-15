@@ -3,8 +3,6 @@
 # This program published under Apache 2.0 license
 # See LICENSE for more details
 # My EMail: assassin@sonikelf.ru
-# My XMPP-conference: bottiks@conference.jabber.ru
-# My Site: bottiks.ucoz.ru
 # handlers-file for Altaire bot
 
 from __main__ import *

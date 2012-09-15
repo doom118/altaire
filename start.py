@@ -8,9 +8,9 @@
 # kernel
 
 # ToDo:
-#	rewrite configs with using ConfigParser (rewtite jid's class)		(critical)
-#	alive_keeper/jids 													(optional)
-#	alive_keeper/conferences 											(optional)
+#	rewrite configs with using ConfigParser (rewtite jid's class) (likely done)			(critical)
+#	alive_keeper/jids 																	(optional)
+#	alive_keeper/conferences 															(optional)
 
 
 
@@ -515,14 +515,19 @@ class JID:
 	def __init__(self, jid, dictionary):
 		self.jid = jid
 		self.user, self.server = jid.split('@')
-		self.connect = xmpp.Client(self.server, port, list())
+		self.port = dictionary['port']
+		self.host = dictionary['host']
+		self.password = dictionary['password']
+		self.tls = dictionary['tls']
+		self.resource = dictionary['resource']
+		self.connect = xmpp.Client(self.host, self.port, None)
 		self.conferences = dict()
 	def auth(self):
-		Print('Connection to server %s (:%i):  ' % (self.server, port), brown, True)
-		if self.connect.connect((self.server, port), secure = 0, use_srv = True):
+		Print('Connection to server %s (:%i):  ' % (self.server, self.port), brown, True)
+		if self.connect.connect((self.server, self.port), None, (None if self.tls else False), (False if self.tls else True)):
 			Print('OK', green)
 			Print('Authentication:  ', brown, True)
-			if self.connect.auth(self.host, password, u'Altaire XMPP bot'):
+			if self.connect.auth(self.host, self.password, self.resource):
 				Print('OK', green)
 				self.connect.sendInitPresence()
 				self.connect.getRoster()
@@ -565,7 +570,7 @@ execute_handlers('after_load_plugins')
 for jid in jids:
 	try:
 		Print(u'< %s >' % jid, blue)
-		JIDS[jid] = JID(jid)
+		JIDS[jid] = JID(jid, jids[jid])
 		if JIDS[jid].auth():
 			Print('Jabber ID %s is successfully initialized\n' % jid, green)
 		else:
