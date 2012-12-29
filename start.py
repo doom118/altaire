@@ -13,7 +13,7 @@
 # [package]	alive_keeper/conferences														(optional)
 # [package]	send/send (finish)																(optional)
 # [core]	доделать систему обработки обновления файлов (которая нужна для send/send)		(optional)
-
+# [core]	доделать систему двух локализаций
 
 import sys, os, gc
 from traceback import format_exc
@@ -73,9 +73,8 @@ def setMainCofig():
 	import ConfigParser
 	CP = ConfigParser.ConfigParser()
 	CP.read('other/config.ini')
-	language = \
-		{1: CP.get('LANGUAGES', 'FIRST').upper(),
-		2: CP.get('LANGUAGES', 'SECOND').upper()}
+	global language
+	language = CP.get('LANGUAGES', 'LANGUAGE').upper()
 	status = CP.get('INFORMATION', 'STATUS')
 	default_nick = CP.get('INFORMATION', 'NICK')
 	admins = CP.get('INFORMATION', 'STATUS').split()
@@ -92,6 +91,7 @@ def setJidsConfig():
 	import ConfigParser
 	CP = ConfigParser.ConfigParser()
 	CP.read('other/jids.ini')
+	global jids
 	jids = dict()
 	for jid in CP.sections():
 		jids['%s@%s' % (CP.get(jid, 'USER'), CP.get(jid, 'SERVER'))] = \
@@ -111,7 +111,7 @@ def File(confFile, text = None, ini = False):
 			noSetFile.close()
 			return text.decode('utf8')
 		else:
-			return File(conFile, str())
+			return File(confFile, str())
 	else:
 		if ini:
 			if os.path.exists(confFile):
