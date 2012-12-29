@@ -8,10 +8,11 @@
 # kernel
 
 # ToDo:
-#	rewrite configs with using ConfigParser (rewtite jid's class) (likely done)			(critical)
-#	alive_keeper/jids 																	(optional)
-#	alive_keeper/conferences 															(optional)
-
+# [core]	rewrite configs with using ConfigParser (rewtite jid's class) (likely done)		(critical)
+# [package]	alive_keeper/jids																(optional)
+# [package]	alive_keeper/conferences														(optional)
+# [package]	send/send (finish)																(optional)
+# [core]	доделать систему обработки обновления файлов (которая нужна для send/send)		(optional)
 
 
 import sys, os, gc
@@ -19,7 +20,7 @@ from traceback import format_exc
 from time import sleep, time
 gc.enable()
 
-version = '0.14.3 Alpha Unpublic'
+version = '0.15.2 Alpha Unpublic'
 
 core = os.path.abspath(__file__)
 coreDir = os.path.split(core)[0]
@@ -27,10 +28,6 @@ if coreDir: os.chdir(coreDir)
 pid = os.getpid()
 
 sys.path.insert(0, 'libs')
-
-
-
-import xmpp
 
 
 # print with colors
@@ -71,33 +68,38 @@ def crash(com = None):
 	else:
 		repo(translate['error'] % format_exc())
 
-# getting the settings
-import ConfigParser
-CP = ConfigParser.ConfigParser()
-CP.read('other/config.ini')
-language = \
-	{1: CP.get('LANGUAGES', 'FIRST'),
-	2: CP.get('LANGUAGES', 'SECOND')}
-status = CP.get('INFORMATION', 'STATUS')
-default_nick = CP.get('INFORMATION', 'NICK')
-admins = CP.get('INFORMATION', 'STATUS').split()
-antispam_limit = CP.getfloat('ANTISPAM', 'LIMIT')
-antispam_polices = CP.getint('ANTISPAM', 'POLICES')
-limits = \
-	{'memory': CP.getint('LIMITS', 'MEMORY'),
-	'chat': CP.getfloat('LIMITS', 'CHAT MESSAGE'),
-	'roster': CP.getfloat('LIMITS', 'ROSTER MESSAGE'),
-	'private': CP.getfloat('LIMITS', 'PRIVATE MESSAGE')}
-CP = ConfigParser.ConfigParser()
-CP.read('other/jids.ini')
-jids = dict()
-for jid in CP.sections():
-	jids['%s@%s' % (CP.get(jid, 'USER'), CP.get(jid, 'SERVER'))] = \
-		{'port': CP.getint(jid, 'PORT'),
-		'host': CP.getint(jid, 'HOST'),
-		'password': CP.getint(jid, 'PASSWORD'),
-		'tls': CP.getboolean(jid, 'TLS'),
-		'resource': CP.get(jid, 'RESOURCE')}
+# get and set the config.ini
+def setMainCofig():
+	import ConfigParser
+	CP = ConfigParser.ConfigParser()
+	CP.read('other/config.ini')
+	language = \
+		{1: CP.get('LANGUAGES', 'FIRST').upper(),
+		2: CP.get('LANGUAGES', 'SECOND').upper()}
+	status = CP.get('INFORMATION', 'STATUS')
+	default_nick = CP.get('INFORMATION', 'NICK')
+	admins = CP.get('INFORMATION', 'STATUS').split()
+	antispam_limit = CP.getfloat('ANTISPAM', 'LIMIT')
+	antispam_polices = CP.getint('ANTISPAM', 'POLICES')
+	limits = \
+		{'memory': CP.getint('LIMITS', 'MEMORY'),
+		'chat': CP.getfloat('LIMITS', 'CHAT MESSAGE'),
+		'roster': CP.getfloat('LIMITS', 'ROSTER MESSAGE'),
+		'private': CP.getfloat('LIMITS', 'PRIVATE MESSAGE')}
+
+# get and set the jids.ini
+def setJidsConfig():
+	import ConfigParser
+	CP = ConfigParser.ConfigParser()
+	CP.read('other/jids.ini')
+	jids = dict()
+	for jid in CP.sections():
+		jids['%s@%s' % (CP.get(jid, 'USER'), CP.get(jid, 'SERVER'))] = \
+			{'port': CP.getint(jid, 'PORT'),
+			'host': CP.get(jid, 'HOST'),
+			'password': CP.get(jid, 'PASSWORD'),
+			'tls': CP.getboolean(jid, 'TLS'),
+			'resource': CP.get(jid, 'RESOURCE')}
 
 # operations with files
 def File(confFile, text = None, ini = False):
@@ -191,22 +193,28 @@ def hand(func, params, com = None):
 	except:
 		crash(com)
 
+rawMsg = lambda connect, msgtype, jid, text: \
+	connect.send(xmpp.Message(jid, text, msgtype))
+	
+
+# answer (syntax: fmsg(source, text)) (using msg)
+fmsg = lambda source, text: \
+	msg(source[0], source[1], source[2], text)
+
 # send messages
 def msg(connect, msgtype, jid, text):
 	text = text.decode('utf8', 'replace')
-	while len(text) > 512:
-		connect.send(xmpp.Message(jid, text[:512] + u'...', msgtype))
-		text = text[512:]
-	connect.send(xmpp.Message(jid, text, msgtype))
+	while len(text) > limits[msgtype]:
+		connect.send(xmpp.Message(jid, u'%s...' % text[:limits[msgtype]], msgtype)) # text[:512] + u'...', 
+		text = text[limits[msgtype]:]
+	if msgtype in ('private', 'chat'):
+		rawMsg(connect, 'chat', jid, text)
+	else:
+		chat, nick = jid.split('/')
+		rawMsg(connect, 'groupchat', chat, u'%s: %s' % (nick, text))
 	info['outMsg'] += 1
 
-# answer (syntax: fmsg(source, text)) (using msg)
-def fmsg(source, text):
-	if source[1] in ['private', 'chat']:
-		msg(source[0], 'chat', source[2], text)
-	else:
-		chat, nick = source[2].split('/')
-		msg(source[0], 'groupchat', chat, u'%s: %s' % (nick, text))
+
 
 # work with groupchats file
 def refesh_group_file(chat, delete = False):
@@ -284,11 +292,11 @@ class command:
 class conference:
 	__slots__ = ('conference', 'joined', 'connect', 'password',
 		'nick', 'status', 'statusShow', 'users', 'notAdmin')
+	__str__ = lambda: self.conference
 	def __init__(self, connect, conference):
 		self.conference = conference
 		self.joined = False
 		self.connect = connect
-	__str__ = lambda: self.conference
 	def join(self, password = None, nick = None, status = None, auto = False):
 		bot_jid = get_connect_jid(self.connect)
 		if not nick: nick = default_nick
@@ -319,11 +327,11 @@ class conference:
 	# leave of conference
 	def leave(self, auto = False):
 		if self.joined:
+			execute_handlers('leave', (self.conference))
 			self.connect.send(xmpp.Presence(self.conference, 'unavailable'))
 			self.joined = False
 			if not auto:
 				refesh_group_file(self.conference, True)
-			execute_handlers('leave', (self.conference))
 		else:
 			raise Error('not joined')
 	# leave and join to conference
@@ -392,7 +400,7 @@ class conference:
 		#############		#############
 		#############		#############
 		#############
-		
+##############################################
 
 def load_package(pack):
 	for packFile in os.listdir('packages/%s' % pack):
@@ -498,6 +506,7 @@ def checkRepo():
 		repo(translate['repo'] + readed)
 		File('REPO', str())
 
+# only for linux
 def getMemory():
 	lines = popen('ps -o rss -p %d' % pid).splitlines()
 	if len(lines) >= 2:
@@ -556,8 +565,11 @@ class JID:
 if (os.name != 'posix') and ('force' not in sys.argv):
 	bot_off('Altaire XMPP bot working only on POSIX systems (if you know what are you doing use parameter "force")')
 
-import smartThr, inputHandlers
-language = language.upper()
+# getting configs (config.ini, jids.ini)
+setMainCofig()
+setJidsConfig()
+
+import smartThr, inputHandlers, xmpp
 execfile('locales/%s' % language)
 for packDir in os.listdir('packages'):
 	if os.path.isdir(os.path.join('packages', packDir)) and packDir != '.svn':
