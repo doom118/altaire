@@ -17,8 +17,7 @@ class dialogue:
 
 def message(connect, SMessage):
 	# message handler
-	if SMessage.timestamp: return
-	else:
+	if not SMessage.timestamp:
 		text = SMessage.getBody()
 		if text:
 			text = text.strip().decode('utf8')
@@ -64,42 +63,42 @@ def message(connect, SMessage):
 		else: return
 		fullJid = unicode(fullJid).decode('utf8')
 		trueJid = get_jid(fullJid).decode('utf8')
-		if trueJid in blocked_jids: return
-		if flooders.has_key(trueJid):
-			timer = time() - flooders[trueJid]['lastMessage']
-			if timer < antispam_limit:
-				if flooders[trueJid]['police'] > antispam_polices:
-					blocked_jids.append(trueJid)
-					return
-				else: flooders[trueJid]['police'] += 1
-			elif timer > 4: flooders[trueJid]['police'] = 0
-			flooders[trueJid]['lastMessage'] = time()
-		else: flooders[trueJid] = {'police': int(), 'lastMessage': time()}
-		info['inMsg'] += 1
-		text = text[len(command):].strip()
-		if dialogues.has_key(trueJid):
-			if access(fullJid) >= dialogues[trueJid].access:
-				info['comms'] += 1
-				if dialogues[trueJid].answers.has_key(command):
-					smartThr.Thread(None, hand, 'command-%d' % info['comms'],
-						(dialogues[trueJid].answers[command],
-						((connect, type, fullJid, chat, botNick, botJid, nick, trueJid),
-						text,), command)).start()
-				else: fmsg([connect, type, fullJid], translate['badAnswer'])
-			else:
-				fmsg([connect, type, fullJid], translate['noAccessDialogue'])
-				del dialogues[trueJid]
-		else:
-			temp = search_command(command)
-			if temp:
-				if access(fullJid) >= commands[temp].access:
+		if not trueJid in blocked_jids:
+			if flooders.has_key(trueJid):
+				timer = time() - flooders[trueJid]['lastMessage']
+				if timer < antispam_limit:
+					if flooders[trueJid]['police'] > antispam_polices:
+						blocked_jids.append(trueJid)
+						return
+					else: flooders[trueJid]['police'] += 1
+				elif timer > 4: flooders[trueJid]['police'] = 0
+				flooders[trueJid]['lastMessage'] = time()
+			else: flooders[trueJid] = {'police': int(), 'lastMessage': time()}
+			info['inMsg'] += 1
+			text = text[len(command):].strip()
+			if dialogues.has_key(trueJid):
+				if access(fullJid) >= dialogues[trueJid].access:
 					info['comms'] += 1
-					commands[temp].used += 1
-					smartThr.Thread(None, hand, 'command-%s-%d' % (temp, info['comms']),
-						(commands[temp].function,
-						((connect, type, fullJid, chat, botNick, botJid, nick, trueJid),
-						text,), temp)).start()
-				else: fmsg([connect, type, fullJid], translate['noAccess'])
+					if dialogues[trueJid].answers.has_key(command):
+						smartThr.Thread(None, hand, 'command-%d' % info['comms'],
+							(dialogues[trueJid].answers[command],
+							((connect, type, fullJid, chat, botNick, botJid, nick, trueJid),
+							text,), command)).start()
+					else: fmsg([connect, type, fullJid], translate['badAnswer'])
+				else:
+					fmsg([connect, type, fullJid], translate['noAccessDialogue'])
+					del dialogues[trueJid]
+			else:
+				temp = search_command(command)
+				if temp:
+					if access(fullJid) >= commands[temp].access:
+						info['comms'] += 1
+						commands[temp].used += 1
+						smartThr.Thread(None, hand, 'command-%s-%d' % (temp, info['comms']),
+							(commands[temp].function,
+							((connect, type, fullJid, chat, botNick, botJid, nick, trueJid),
+							text,), temp)).start()
+					else: fmsg([connect, type, fullJid], translate['noAccess'])
 
 def presence(connect, SPresence):
 	# presence handler
@@ -115,7 +114,7 @@ def presence(connect, SPresence):
 		role = SPresence.getRole()
 		if type in ('available', None):
 			# join to conference
-			if	jid:
+			if jid:
 				trueJid = get_jid(jid)
 				if JIDS[botJid].conferences[conference].notAdmin:
 					JIDS[botJid].conferences[conference].notAdmin.cancel()

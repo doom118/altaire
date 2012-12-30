@@ -77,14 +77,14 @@ def setMainCofig():
 	language = CP.get('LANGUAGES', 'LANGUAGE').upper()
 	status = CP.get('INFORMATION', 'STATUS')
 	default_nick = CP.get('INFORMATION', 'NICK')
-	admins = CP.get('INFORMATION', 'STATUS').split()
+	admins = CP.get('INFORMATION', 'ADMINS').split()
 	antispam_limit = CP.getfloat('ANTISPAM', 'LIMIT')
 	antispam_polices = CP.getint('ANTISPAM', 'POLICES')
 	limits = \
 		{'memory': CP.getint('LIMITS', 'MEMORY'),
-		'chat': CP.getfloat('LIMITS', 'CHAT MESSAGE'),
-		'roster': CP.getfloat('LIMITS', 'ROSTER MESSAGE'),
-		'private': CP.getfloat('LIMITS', 'PRIVATE MESSAGE')}
+		'chat': CP.getint('LIMITS', 'CHAT MESSAGE'),
+		'roster': CP.getint('LIMITS', 'ROSTER MESSAGE'),
+		'private': CP.getint('LIMITS', 'PRIVATE MESSAGE')}
 
 # get and set the jids.ini
 def setJidsConfig():
@@ -205,7 +205,7 @@ fmsg = lambda source, text: \
 def msg(connect, msgtype, jid, text):
 	text = text.decode('utf8', 'replace')
 	while len(text) > limits[msgtype]:
-		connect.send(xmpp.Message(jid, u'%s...' % text[:limits[msgtype]], msgtype)) # text[:512] + u'...', 
+		connect.send(xmpp.Message(jid, u'%s...' % text[:limits[msgtype]], msgtype))
 		text = text[limits[msgtype]:]
 	if msgtype in ('private', 'chat'):
 		rawMsg(connect, 'chat', jid, text)
@@ -266,7 +266,7 @@ class command:
 	def __init__(self, comstat, func, acc = 1):
 		self.loaded = False
 		self.comstat = comstat
-		self.func = func
+		self.function = func
 		self.access = acc
 		self.used = int()
 	def load(self):
@@ -482,9 +482,9 @@ def access(jid):
 			if get_jid(jid) in admins:
 				return 9
 			else:
-				JIDS[temp].conferences[conference].users[nick].access()
+				return JIDS[temp].conferences[conference].users[nick].access()
 		else:
-			jid = conference
+			jid = get_jid(jid)
 	return (9 if jid in admins else 1)
 
 def reg_command(comstat, func, acc = 1):
@@ -569,7 +569,7 @@ if (os.name != 'posix') and ('force' not in sys.argv):
 setMainCofig()
 setJidsConfig()
 
-import smartThr, inputHandlers, xmpp
+import xmpp, smartThr, inputHandlers
 execfile('locales/%s' % language)
 for packDir in os.listdir('packages'):
 	if os.path.isdir(os.path.join('packages', packDir)) and packDir != '.svn':

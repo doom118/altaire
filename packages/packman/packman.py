@@ -98,10 +98,12 @@ def command_packman(source, parameters):
 							fmsg(source, translate['comms']['packman']['nowPackInstalled'] % pack)
 						else:
 							result = packman_init(pack)
-							allResults += result
 							if result:
+								allResults += result
 								load_package(parameters[1])
-							else: fmsg(source, translate['comms']['packman']['packNotFound'] % pack)
+							else:
+								fmsg(source, translate['comms']['packman']['packNotFound'] % pack)
+								return
 					fmsg(source, translate['performed'])
 					fmsg(source, translate['comms']['packman']['installedDepends'] % ', '.join(allResults))
 			else: fmsg(source, translate['outOfArguments'])
