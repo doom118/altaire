@@ -467,7 +467,7 @@ def bot_off(reason = None, jid = None, reloadJid = False):
 			Print(chr(10) + 'Altaire XMPP bot aborting', blue)
 		for jid in JIDS.keys():
 			if get_connect(jid).isConnected():
-				JIDS[jid].disconnect()
+				JIDS[jid].disconnect(reason)
 		if reloadJid:
 			os.execl(sys.executable,
 			sys.executable, core)
