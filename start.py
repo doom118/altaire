@@ -515,7 +515,7 @@ def getMemory():
 
 def dispatcher():
 	while True:
-		sleep(240)
+		sleep(30)
 		if getMemory() > limits['memory']:
 			bot_off(translate['memoryLeak'])
 		gc.collect()
