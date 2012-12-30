@@ -73,7 +73,7 @@ def setMainCofig():
 	import ConfigParser
 	CP = ConfigParser.ConfigParser()
 	CP.read('other/config.ini')
-	global language
+	global language, status, default_nick, admins, antispam_limit, antispam_polices, limits
 	language = CP.get('LANGUAGES', 'LANGUAGE').upper()
 	status = CP.get('INFORMATION', 'STATUS')
 	default_nick = CP.get('INFORMATION', 'NICK')
