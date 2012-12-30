@@ -34,22 +34,22 @@ def downloadDir(url, dir):
 			path = ('locales/%s' % file if (file.endswith('.help') or file.endswith('.comms')) else dir + '/%s' % file)
 			if os.path.exists(path): os.remove(path)					
 			download(url + '/%s' % file, path)
-	
-	
+
+
 
 def packman_init(pack, depend = False):
 	if (pack in getAllPacks()) or (depend and (pack in getAllDeps())):
 		temp = ('depends' if depend else 'packages')
-		depPacks, depFiles = [eval(x) for x in urlopen('http://altaire-packages.googlecode.com/git/%s/%s/depends' % (pack, temp)).read().splitlines()]
+		depPacks, depFiles = [eval(x) for x in urlopen('http://altaire-packages.googlecode.com/git/%s/%s/depends' % (temp, pack)).read().splitlines()]
 		packs, files = getAllPacks(), getDepFiles()
-		installed = [pack]
+		installed = list()
 		for file in depFiles:
 			if file not in files:
 				installed += packman_init(file, True)
 		for Pack in depPacks:
 			if Pack not in packs:
 				installed += packman_init(Pack)
-		downloadDir('http://altaire-packages.googlecode.com/git/%s/%s' % (pack, temp), '%s/%s' % (pack, temp))
+		downloadDir('http://altaire-packages.googlecode.com/git/%s/%s' % (temp, pack), '%s/%s' % (temp, pack))
 		return installed
 	else: return False
 		
@@ -89,7 +89,7 @@ def command_packman(source, parameters):
 						if result:
 							load_package(parameters[1])
 					fmsg(source, translate['performed'])
-					fmsg(source, translate['comms']['packman']['installedDepends'] % ', '.join(result))
+					if result: fmsg(source, translate['comms']['packman']['installedDepends'] % ', '.join(result))
 				else:
 					# install
 					allResults = list()
@@ -98,14 +98,14 @@ def command_packman(source, parameters):
 							fmsg(source, translate['comms']['packman']['nowPackInstalled'] % pack)
 						else:
 							result = packman_init(pack)
-							if result:
+							if not (result is False):
 								allResults += result
 								load_package(parameters[1])
 							else:
 								fmsg(source, translate['comms']['packman']['packNotFound'] % pack)
 								return
 					fmsg(source, translate['performed'])
-					fmsg(source, translate['comms']['packman']['installedDepends'] % ', '.join(allResults))
+					if allResults: fmsg(source, translate['comms']['packman']['installedDepends'] % ', '.join(allResults))
 			else: fmsg(source, translate['outOfArguments'])
 		elif parameters[0] in translate['comms']['packman']['upgrade']:
 			if lenp >= 2:

@@ -241,7 +241,7 @@ replaceHTML = lambda text: HTMLParser().unescape(text)
 def enumerateLines(list):
 	temp = unicode()
 	for number, var in enumerate(list):
-		temp += u'%d) %s' % (number + 1, var)
+		temp += u'%d) %s ' % (number + 1, var)
 	return temp
 
 # classes
@@ -412,7 +412,7 @@ def processes(connect):
 	jid = get_connect_jid(connect)
 	while JIDS.has_key(jid) and connect.isConnected():
 		try:
-			connect.Process()
+			connect.Process(1)
 		except xmpp.Conflict:
 			bot_off('XMPP conflict', jid)
 		except:
