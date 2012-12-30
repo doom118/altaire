@@ -536,18 +536,18 @@ class JID:
 		if self.connect.connect((self.server, self.port), None, (None if self.tls else False), (False if self.tls else True)):
 			Print('OK', green)
 			Print('Authentication:  ', brown, True)
-			if self.connect.auth(self.host, self.password, self.resource):
+			if self.connect.auth(self.user, self.password, self.resource):
 				Print('OK', green)
 				self.connect.sendInitPresence()
 				self.connect.getRoster()
 				self.connect.RegisterHandler('message', inputHandlers.message)
 				self.connect.RegisterHandler('presence', inputHandlers.presence)
 				self.connect.RegisterHandler('iq', inputHandlers.iq)
-				smartThr.Thread(None, hand, 'processes-%s' % self.jid, (processes,
-					(self.connect,),)).start()
-				return True
-			else: return False
-		else: return False
+				smartThr.Thread(None, hand, 'processes-%s' % self.jid,
+					(processes, (self.connect,),)).start()
+				return (True)
+			else: return (False, self.connect.lastErr)
+		else: return (False, self.connect.lastErr)
 	def disconnect(self, reason = None):
 		if self.connect.isConnected():
 			notSetPresenceOffline = xmpp.Presence(None, 'unavailable')
@@ -583,10 +583,11 @@ for jid in jids:
 	try:
 		Print(u'< %s >' % jid, blue)
 		JIDS[jid] = JID(jid, jids[jid])
-		if JIDS[jid].auth():
+		result = JIDS[jid].auth()
+		if result[0]:
 			Print('Jabber ID %s is successfully initialized\n' % jid, green)
 		else:
-			Print('Failed\nInitialize of Jabber ID %s is crashed\n' % jid, red)
+			Print('Failed\nInitialize of Jabber ID %s is crashed:\n%s\n' % (jid, result[1]), red)
 			del JIDS[jid]
 	except KeyboardInterrupt:
 		bot_off('CTRL+C')
