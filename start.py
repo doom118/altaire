@@ -510,7 +510,7 @@ def checkRepo():
 def getMemory():
 	lines = popen('ps -o rss -p %d' % pid).splitlines()
 	if len(lines) >= 2:
-		return lines[1].strip()
+		return int(lines[1])
 	else: return int()
 
 def dispatcher():
