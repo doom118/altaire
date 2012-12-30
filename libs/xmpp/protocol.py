@@ -569,7 +569,7 @@ class Iq(Protocol):
 		""" Return the 'query' child element child nodes."""
 		tag=self.getTag('query')
 		if tag: return tag.getChildren()
-	setQueryNS = lambda self, namespace: tag.getNamespace()
+	setQueryNS = lambda self, namespace: self.setTag('query').setNamespace(namespace)
 	""" Set the namespace of the 'query' child element."""
 	setQueryPayload = lambda self, payload: self.setTag('query').setPayload(payload)
 	""" Set the 'query' child element payload."""
