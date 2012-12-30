@@ -545,7 +545,7 @@ class JID:
 				self.connect.RegisterHandler('iq', inputHandlers.iq)
 				smartThr.Thread(None, hand, 'processes-%s' % self.jid,
 					(processes, (self.connect,),)).start()
-				return (True)
+				return (True,)
 			else: return (False, self.connect.lastErr)
 		else: return (False, self.connect.lastErr)
 	def disconnect(self, reason = None):
